@@ -17,6 +17,7 @@ static esp_err_t favicon_get_handler(httpd_req_t *req)
  * This can be overridden by uploading file with same name */
 static esp_err_t index_html_get_handler(httpd_req_t *req)
 {
+    ESP_LOGI(TAG, "Redirecting to /");
     httpd_resp_set_status(req, "307 Temporary Redirect");
     httpd_resp_set_hdr(req, "Location", "/");
     httpd_resp_send(req, NULL, 0);  // Response body can be empty
@@ -85,6 +86,7 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
     DIR *dir = opendir(dirpath);
     const size_t dirpath_len = strlen(dirpath);
 
+    ESP_LOGI(TAG, "Opening list of files");
     /* Retrieve the base path of file storage to construct the full path */
     strlcpy(entrypath, dirpath, sizeof(entrypath));
 
@@ -99,8 +101,8 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
     httpd_resp_sendstr_chunk(req, "<!DOCTYPE html><html><body>");
 
     /* Get handle to embedded file upload script */
-    extern const unsigned char upload_script_start[] asm("_binary_root_html_start");
-    extern const unsigned char upload_script_end[]   asm("_binary_root_html_end");
+    extern const unsigned char upload_script_start[] asm("_binary_upload_script_html_start");
+    extern const unsigned char upload_script_end[]   asm("_binary_upload_script_html_end");
     const size_t upload_script_size = (upload_script_end - upload_script_start);
 
     /* Add file upload form and script which on execution sends a POST request to /upload */
@@ -132,6 +134,8 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
         if (entry->d_type == DT_DIR) {
             httpd_resp_sendstr_chunk(req, "/");
         }
+        httpd_resp_sendstr_chunk(req, "\" download=\"");
+        httpd_resp_sendstr_chunk(req, entry->d_name);
         httpd_resp_sendstr_chunk(req, "\">");
         httpd_resp_sendstr_chunk(req, entry->d_name);
         httpd_resp_sendstr_chunk(req, "</a></td><td>");
@@ -183,7 +187,8 @@ esp_err_t download_get_handler(httpd_req_t *req)
     if (stat(filepath, &file_stat) == -1) {
         /* If file not present on SPIFFS check if URI
          * corresponds to one of the hardcoded paths */
-        if (strcmp(filename, "/index.html") == 0) {
+        ESP_LOGI(TAG, "Filepath : %s, Uri : %s", filepath, req->uri);
+        if (strcmp(filename, "/root.html") == 0) {
             return index_html_get_handler(req);
         } else if (strcmp(filename, "/favicon.ico") == 0) {
             return favicon_get_handler(req);

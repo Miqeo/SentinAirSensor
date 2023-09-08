@@ -52,22 +52,22 @@ static void wifi_init_softap(void)
 }
 
 // HTTP GET Handler
-static esp_err_t root_get_handler(httpd_req_t *req)
-{
-    const uint32_t root_len = root_end - root_start;
+// static esp_err_t root_get_handler(httpd_req_t *req)
+// {
+//     const uint32_t root_len = root_end - root_start;
 
-    ESP_LOGI(TAG, "Serve root");
-    httpd_resp_set_type(req, "text/html");
-    httpd_resp_send(req, root_start, root_len);
+//     ESP_LOGI(TAG, "Serve root");
+//     httpd_resp_set_type(req, "text/html");
+//     httpd_resp_send(req, root_start, root_len);
 
-    return ESP_OK;
-}
+//     return ESP_OK;
+// }
 
-static const httpd_uri_t root = {
-    .uri = "/",
-    .method = HTTP_GET,
-    .handler = root_get_handler
-};
+// static const httpd_uri_t root = {
+//     .uri = "/sdcard/hotspot-detect.html",
+//     .method = HTTP_GET,
+//     .handler = root_get_handler
+// };
 
 // HTTP Error (404) Handler - Redirects all requests to the root page
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
@@ -112,25 +112,36 @@ static httpd_handle_t start_webserver(const char *base_path)
     if (httpd_start(&server, &config) == ESP_OK) {
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
-        httpd_register_uri_handler(server, &root);
+        
         httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, http_404_error_handler);
-    }
+    
 
-    /* URI handler for getting uploaded files */
-    httpd_uri_t file_download = {
-        .uri       = "/*",  // Match all URIs of type /path/to/file
-        .method    = HTTP_GET,
-        .handler   = download_get_handler,
-        .user_ctx  = server_data    // Pass server data as context
-    };
-    httpd_register_uri_handler(server, &file_download);
+        /* URI handler for getting uploaded files */
+        httpd_uri_t file_download = {
+            .uri       = "/*",  // Match all URIs of type /path/to/file
+            .method    = HTTP_GET,
+            .handler   = download_get_handler,
+            .user_ctx  = server_data    // Pass server data as context
+        };
+        httpd_register_uri_handler(server, &file_download);
+
+        // /* URI handler for deleting files from server */
+        // httpd_uri_t file_delete = {
+        //     .uri       = "/delete/*",   // Match all URIs of type /delete/path/to/file
+        //     .method    = HTTP_POST,
+        //     .handler   = delete_post_handler,
+        //     .user_ctx  = server_data    // Pass server data as context
+        // };
+        // httpd_register_uri_handler(server, &file_delete);
+
+    }
 
     return server;
 }
 
 void start_wifi_c_p(void)
 {
-    const char* base_path = "/";
+    const char* base_path = "/sdcard";
     
     ESP_ERROR_CHECK(mount_storage(base_path));
     // Initialize networking stack
@@ -148,14 +159,6 @@ void start_wifi_c_p(void)
     // Initialise ESP32 in SoftAP mode
     wifi_init_softap();
 
-    
-
     // Start the server for the first time
     start_webserver(base_path);
-
-    
-
-    // Start the DNS server that will redirect all queries to the softAP IP
-    dns_server_config_t config = DNS_SERVER_CONFIG_SINGLE("*" /* all A queries */, "WIFI_AP_DEF" /* softAP netif ID */);
-    start_dns_server(&config);
 }

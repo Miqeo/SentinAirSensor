@@ -1,5 +1,5 @@
 {
     "idf.flashType": "UART",
-    "idf.port": "/dev/cu.usbserial-12310",
+    "idf.port": "/dev/cu.usbserial-14330",
     "idf.adapterTargetName": "esp32"
 }
