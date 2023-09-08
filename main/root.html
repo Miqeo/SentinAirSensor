@@ -11,5 +11,45 @@
   <body>
     <h1>ESP Captive Portal</h1>
     <p>Hello World, this is ESP32!</p>
+
+    <table class="fixed" border="0">
+      <col width="1000px" /><col width="500px" />
+      <tr><td>
+          <h2>ESP32 File Server</h2>
+      </td><td>
+          <table border="0">
+              <tr>
+                  <td>
+                      <label for="newfile">Upload a file</label>
+                  </td>
+                  <td colspan="2">
+                      <input id="newfile" type="file" onchange="setpath()" style="width:100%;">
+                  </td>
+              </tr>
+              <tr>
+                  <td>
+                      <label for="filepath">Set path on server</label>
+                  </td>
+                  <td>
+                      <input id="filepath" type="text" style="width:100%;">
+                  </td>
+                  <td>
+                      <button id="upload" type="button" onclick="upload()">Upload</button>
+                  </td>
+              </tr>
+          </table>
+      </td></tr>
+    </table>
+    <script>
+    function setpath() {
+        var default_path = document.getElementById("newfile").files[0].name;
+        document.getElementById("filepath").value = default_path;
+    }
+    function upload() {
+        var filePath = document.getElementById("filepath").value;
+        var upload_path = "/upload/" + filePath;
+        alert(filePath);
+    }
+    </script>
   </body>
 </html>

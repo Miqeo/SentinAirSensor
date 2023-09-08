@@ -1,5 +1,7 @@
 #include "wifi_stack.h"
 
+static const char *TAG = "wifi_stack";
+
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
 {
@@ -81,12 +83,29 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
     return ESP_OK;
 }
 
-static httpd_handle_t start_webserver(void)
+static httpd_handle_t start_webserver(const char *base_path)
 {
+    static struct file_server_data *server_data = NULL;
+
+    if (server_data) {
+        ESP_LOGE(TAG, "File server already started");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    /* Allocate memory for server data */
+    server_data = calloc(1, sizeof(struct file_server_data));
+    if (!server_data) {
+        ESP_LOGE(TAG, "Failed to allocate memory for server data");
+        return ESP_ERR_NO_MEM;
+    }
+    strlcpy(server_data->base_path, base_path, sizeof(server_data->base_path));
+    
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_open_sockets = 13;
     config.lru_purge_enable = true;
+
+    config.uri_match_fn = httpd_uri_match_wildcard;
 
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
@@ -96,11 +115,24 @@ static httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &root);
         httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, http_404_error_handler);
     }
+
+    /* URI handler for getting uploaded files */
+    httpd_uri_t file_download = {
+        .uri       = "/*",  // Match all URIs of type /path/to/file
+        .method    = HTTP_GET,
+        .handler   = download_get_handler,
+        .user_ctx  = server_data    // Pass server data as context
+    };
+    httpd_register_uri_handler(server, &file_download);
+
     return server;
 }
 
 void start_wifi_c_p(void)
 {
+    const char* base_path = "/";
+    
+    ESP_ERROR_CHECK(mount_storage(base_path));
     // Initialize networking stack
     ESP_ERROR_CHECK(esp_netif_init());
 
@@ -116,8 +148,12 @@ void start_wifi_c_p(void)
     // Initialise ESP32 in SoftAP mode
     wifi_init_softap();
 
+    
+
     // Start the server for the first time
-    start_webserver();
+    start_webserver(base_path);
+
+    
 
     // Start the DNS server that will redirect all queries to the softAP IP
     dns_server_config_t config = DNS_SERVER_CONFIG_SINGLE("*" /* all A queries */, "WIFI_AP_DEF" /* softAP netif ID */);
