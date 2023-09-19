@@ -18,3 +18,237 @@ menu "Example Configuration"
         help
             Max number of the STA connects to AP.
 endmenu
+
+menu "BMX280 Options"
+    choice BMX280_EXPECT_DEVICE
+        prompt "Installed Sensor Model"
+        help
+            Set to the model of the sensor you are using (if you know it).
+        default BMX280_EXPECT_DETECT
+        config BMX280_EXPECT_DETECT
+            bool "Auto"
+        config BMX280_EXPECT_BME280
+            bool "BME280"
+        config BMX280_EXPECT_BMP280
+            bool "BMP280"
+    endchoice
+
+    choice BMX280_ADDRESS
+        prompt "I2C Slave Address"
+        help
+            Set the slave address of the sensor if you know it. The driver can
+            automatically detect it if you don't know.
+        default BMX280_ADDRESS_DETECT
+        config BMX280_ADDRESS_DETECT
+            bool "Auto"
+        config BMX280_ADDERSS_LO
+            bool "0x76 (SDO LOW)"
+        config BMX280_ADDERSS_HI
+            bool "0x77 (SDO HIGH)"
+    endchoice
+
+    config BMX280_TIMEOUT
+        int "Read/Write Timeout"
+        default 5
+        help
+            Number of ticks to wait for I2C read/write operations.
+
+    menu "Default Configuration"
+        choice BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING
+            prompt "Temperature Oversampling"
+            default BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_X2
+            help
+                Refer to BMP280/BME280 Datasheet for more information.
+            config BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_NONE
+                bool "None"
+            config BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_X1
+                bool "x1"
+            config BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_X2
+                bool "x2"
+            config BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_X4
+                bool "x4"
+            config BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_X8
+                bool "x8"
+            config BMX280_DEFAULT_TEMPERATURE_OVERSAMPLING_X16
+                bool "x16"
+        endchoice
+
+        choice BMX280_DEFAULT_PRESSURE_OVERSAMPLING
+            prompt "Pressure Oversampling"
+            default BMX280_DEFAULT_PRESSURE_OVERSAMPLING_X16
+            help
+                Refer to BMP280/BME280 Datasheet for more information.
+            config BMX280_DEFAULT_PRESSURE_OVERSAMPLING_NONE
+                bool "None"
+            config BMX280_DEFAULT_PRESSURE_OVERSAMPLING_X1
+                bool "x1"
+            config BMX280_DEFAULT_PRESSURE_OVERSAMPLING_X2
+                bool "x2"
+            config BMX280_DEFAULT_PRESSURE_OVERSAMPLING_X4
+                bool "x4"
+            config BMX280_DEFAULT_PRESSURE_OVERSAMPLING_X8
+                bool "x8"
+            config BMX280_DEFAULT_PRESSURE_OVERSAMPLING_X16
+                bool "x16"
+        endchoice
+
+        choice BMX280_DEFAULT_STANDBY
+            prompt "Cyclic Measurement Standby Time"
+            default BMX280_DEFAULT_STANDBY_0M5
+            help
+                Refer to BMP280/BME280 Datasheet for more information.
+            config BMX280_DEFAULT_STANDBY_0M5
+                bool "0.5ms"
+            config BMX280_DEFAULT_STANDBY_62M5
+                bool "62.5ms"
+            config BMX280_DEFAULT_STANDBY_125M
+                bool "125ms"
+            config BMX280_DEFAULT_STANDBY_250M
+                bool "250ms"
+            config BMX280_DEFAULT_STANDBY_500M
+                bool "500ms"
+            config BMX280_DEFAULT_STANDBY_1000M
+                bool "1000ms"
+            config BMX280_DEFAULT_STANDBY_10M
+                bool "BMP280: 2000ms // BME280: 10ms"
+            config BMX280_DEFAULT_STANDBY_20M
+                bool "BMP280: 4000ms // BME280: 20ms"
+        endchoice
+
+        choice BMX280_DEFAULT_IIR
+            prompt "IIR Filter Sensitivity"
+            default BMX280_DEFAULT_IIR_X16
+            help
+                Refer to BMP280/BME280 Datasheet for more information.
+            config BMX280_DEFAULT_IIR_NONE
+                bool "Filter Off"
+            config BMX280_DEFAULT_IIR_X2
+                bool "x2"
+            config BMX280_DEFAULT_IIR_X4
+                bool "x4"
+            config BMX280_DEFAULT_IIR_X8
+                bool "x8"
+            config BMX280_DEFAULT_IIR_X16
+                bool "x16"
+        endchoice
+
+        menu "BME280 Specific Options"
+            depends on !(BMX280_EXPECT_BMP280)
+
+            choice BMX280_DEFAULT_HUMIDITY_OVERSAMPLING
+                prompt "Humidity Oversampling"
+                default BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_X1
+                help
+                    Refer to BME280 Datasheet for more information.
+                config BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_NONE
+                    bool "None"
+                config BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_X1
+                    bool "x1"
+                config BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_X2
+                    bool "x2"
+                config BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_X4
+                    bool "x4"
+                config BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_X8
+                    bool "x8"
+                config BMX280_DEFAULT_HUMIDITY_OVERSAMPLING_X16
+                    bool "x16"
+            endchoice
+        endmenu
+    endmenu
+endmenu
+
+menu "NMEA Configuration"
+
+    orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
+
+    config NMEA_PARSER_UART_RXD
+        int "UART RXD pin number"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 5
+        help
+            GPIO number for UART RX pin. See UART documentation for more information
+            about available pin numbers for UART.
+
+    config NMEA_PARSER_RING_BUFFER_SIZE
+        int "NMEA Parser Ring Buffer Size"
+        range 0 2048
+        default 1024
+        help
+            Size of the ring buffer used for UART Rx channel.
+
+    config NMEA_PARSER_TASK_STACK_SIZE
+        int "NMEA Parser Task Stack Size"
+        range 0 4096
+        default 3072
+        help
+            Stack size of NMEA Parser task.
+
+    config NMEA_PARSER_TASK_PRIORITY
+        int "NMEA Parser Task Priority"
+        range 0 24
+        default 2
+        help
+            Priority of NMEA Parser task.
+
+    menu "NMEA Statement Support"
+        comment "At least one statement must be selected"
+        config NMEA_STATEMENT_GGA
+            bool "GGA Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from GGA statement:
+
+                - Latitude, Longitude, Altitude;
+                - Number of satellites in use, fix status (no fix, GPS, DGPS), UTC time;
+
+        config NMEA_STATEMENT_GSA
+            bool "GSA Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from GSA statement:
+
+                - Position/Vertical/Horizontal dilution of precision;
+                - Fix mode (no fix, 2D, 3D fix);
+                - IDs of satellites in use;
+
+        config NMEA_STATEMENT_GSV
+            bool "GSV Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from GSV statement:
+
+                - Number of satellites in view;
+                - Optional details of each satellite in view;
+
+        config NMEA_STATEMENT_RMC
+            bool "RMC Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from RMC statement:
+
+                - Validity of GPS signal;
+                - Ground speed (knots) and course over ground (degrees);
+                - Magnetic variation;
+                - UTC date;
+
+        config NMEA_STATEMENT_GLL
+            bool "GLL Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from GLL statement:
+
+                - Latitude, Longitude;
+                - UTC time;
+
+        config NMEA_STATEMENT_VTG
+            bool "VTG Statement"
+            default y
+            help
+                Enabling this option will parse the following parameter from VTG statement:
+
+                - Ground speed (knots, km/h) and course over ground (degrees);
+                - Magnetic variation;
+
+    endmenu
+
+endmenu

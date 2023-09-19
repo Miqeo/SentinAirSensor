@@ -1,5 +1,31 @@
 {
     "idf.flashType": "UART",
-    "idf.port": "/dev/cu.usbserial-14330",
-    "idf.adapterTargetName": "esp32"
+    "idf.port": "/dev/cu.usbserial-1410",
+    "idf.adapterTargetName": "esp32",
+    "files.associations": {
+        "typeinfo": "c",
+        "ios": "c",
+        "__bit_reference": "c",
+        "__node_handle": "c",
+        "atomic": "c",
+        "bitset": "c",
+        "deque": "c",
+        "__memory": "c",
+        "limits": "c",
+        "locale": "c",
+        "optional": "c",
+        "ratio": "c",
+        "regex": "c",
+        "system_error": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "vector": "c",
+        "chrono": "c",
+        "cstddef": "c",
+        "filesystem": "c",
+        "random": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
+    }
 }

@@ -126,13 +126,13 @@ static httpd_handle_t start_webserver(const char *base_path)
         httpd_register_uri_handler(server, &file_download);
 
         // /* URI handler for deleting files from server */
-        // httpd_uri_t file_delete = {
-        //     .uri       = "/delete/*",   // Match all URIs of type /delete/path/to/file
-        //     .method    = HTTP_POST,
-        //     .handler   = delete_post_handler,
-        //     .user_ctx  = server_data    // Pass server data as context
-        // };
-        // httpd_register_uri_handler(server, &file_delete);
+        httpd_uri_t file_delete = {
+            .uri       = "/delete/*",   // Match all URIs of type /delete/path/to/file
+            .method    = HTTP_POST,
+            .handler   = delete_post_handler,
+            .user_ctx  = server_data    // Pass server data as context
+        };
+        httpd_register_uri_handler(server, &file_delete);
 
     }
 
@@ -143,7 +143,6 @@ void start_wifi_c_p(void)
 {
     const char* base_path = "/sdcard";
     
-    ESP_ERROR_CHECK(mount_storage(base_path));
     // Initialize networking stack
     ESP_ERROR_CHECK(esp_netif_init());
 

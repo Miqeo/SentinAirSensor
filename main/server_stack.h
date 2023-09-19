@@ -36,3 +36,4 @@ struct file_server_data {
 };
 
 esp_err_t download_get_handler(httpd_req_t *req);
+esp_err_t delete_post_handler(httpd_req_t *req);
