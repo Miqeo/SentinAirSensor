@@ -2,113 +2,132 @@
 
 #define TAG "json_stack"
 
+double round_number(double val)
+{
+    return roundf(val * 100) / 100;
+}
+
 
 char *create_json(struct Measurement_structure measurement_struct)
 {
 
     char *string = NULL;
 
+    cJSON *geometry = NULL;
+    cJSON *coordinates = NULL;
+    cJSON *latitude = NULL;
+    cJSON *longtitude = NULL;
+
+    cJSON *properties = NULL;
+
     cJSON *measurement = cJSON_CreateObject();
-    if (measurement == NULL)
+
+    cJSON *features = NULL;
+
+    cJSON *feature_collection = cJSON_CreateObject();
+
+
+    if (measurement == NULL || feature_collection == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddStringToObject(measurement, "date", measurement_struct.date) == NULL)
+    if (cJSON_AddStringToObject(measurement, "type", "Feature") == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "humidity", measurement_struct.humidity) == NULL)
+    if (cJSON_AddStringToObject(feature_collection, "type", "FeatureCollection") == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "temperature", measurement_struct.temperature) == NULL)
+    geometry = cJSON_CreateObject();
+    if (geometry == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "pressure", measurement_struct.pressure) == NULL)
+    
+
+    if (cJSON_AddStringToObject(geometry, "type", "Point") == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "dust", measurement_struct.dust) == NULL)
+    coordinates = cJSON_CreateArray();
+    if (coordinates == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "lat", measurement_struct.latitude) == NULL)
+    longtitude = cJSON_CreateNumber(measurement_struct.longtitude);
+    if (longtitude == NULL) {
+        goto end;
+    }
+    cJSON_AddItemToArray(coordinates, longtitude);
+
+    latitude = cJSON_CreateNumber(measurement_struct.latitude);
+    if (latitude == NULL) {
+        goto end;
+    }
+    cJSON_AddItemToArray(coordinates, latitude);
+
+    cJSON_AddItemToObject(geometry, "coordinates", coordinates);
+    
+    cJSON_AddItemToObject(measurement, "geometry", geometry);
+
+    properties = cJSON_CreateObject();
+    if (properties == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "lon", measurement_struct.longtitude) == NULL)
+    cJSON_AddItemToObject(measurement, "properties", properties);
+
+    if (cJSON_AddStringToObject(properties, "date", measurement_struct.date) == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(measurement, "alt", measurement_struct.altitude) == NULL)
+    if (cJSON_AddNumberToObject(properties, "humidity", measurement_struct.humidity) == NULL)
     {
         goto end;
     }
 
-    // measurements = cJSON_CreateArray();
-    // if (measurements == NULL)
-    // {
-    //     goto end;
-    // }
-    // cJSON_AddItemToObject(monitor, "measurements", measurements);
+    if (cJSON_AddNumberToObject(properties, "temperature", measurement_struct.temperature) == NULL)
+    {
+        goto end;
+    }
 
-    // for (index = 0; index < num_of_current; index++)  //sizeof(measurements_list) / sizeof(struct Measurement_structure); index++)
-    // {
-    //     cJSON *measurement = cJSON_CreateObject();
+    if (cJSON_AddNumberToObject(properties, "pressure", measurement_struct.pressure) == NULL)
+    {
+        goto end;
+    }
 
-    //     if (cJSON_AddStringToObject(measurement, "date", measurements_list[index].date) == NULL)
-    //     {
-    //         goto end;
-    //     }
+    if (cJSON_AddNumberToObject(properties, "dust", measurement_struct.dust) == NULL)
+    {
+        goto end;
+    }
 
-    //     if (cJSON_AddNumberToObject(measurement, "humidity", measurements_list[index].humidity) == NULL)
-    //     {
-    //         goto end;
-    //     }
+    if (cJSON_AddNumberToObject(properties, "altitude", measurement_struct.altitude) == NULL)
+    {
+        goto end;
+    }
 
-    //     if (cJSON_AddNumberToObject(measurement, "temperature", measurements_list[index].temperature) == NULL)
-    //     {
-    //         goto end;
-    //     }
+    features = cJSON_CreateArray();
+    if (features == NULL)
+    {
+        goto end;
+    }
 
-    //     if (cJSON_AddNumberToObject(measurement, "pressure", measurements_list[index].pressure) == NULL)
-    //     {
-    //         goto end;
-    //     }
+    cJSON_AddItemToArray(features, measurement);
 
-    //     if (cJSON_AddNumberToObject(measurement, "dust", measurements_list[index].dust) == NULL)
-    //     {
-    //         goto end;
-    //     }
+    
+    cJSON_AddItemToObject(feature_collection, "features", features);
 
-    //     if (cJSON_AddNumberToObject(measurement, "lat", measurements_list[index].latitude) == NULL)
-    //     {
-    //         goto end;
-    //     }
 
-    //     if (cJSON_AddNumberToObject(measurement, "lon", measurements_list[index].longtitude) == NULL)
-    //     {
-    //         goto end;
-    //     }
-
-    //     if (cJSON_AddNumberToObject(measurement, "alt", measurements_list[index].altitude) == NULL)
-    //     {
-    //         goto end;
-    //     }
-
-    //     cJSON_AddItemToArray(measurements, measurement);
-    // }
-
-    string = cJSON_Print(measurement);
+    string = cJSON_Print(feature_collection);
     if (string == NULL)
     {
         ESP_LOGE(TAG, "Failed to print monitor.");

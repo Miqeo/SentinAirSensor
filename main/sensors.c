@@ -148,7 +148,7 @@ double bm()
 
 bool gps_correct_update(gps_t *gps) 
 {
-    // return true;
+    return true;
     return gps->fix != GPS_FIX_INVALID
         ||
         (gps->latitude != 0 && gps->longitude != 0 && gps->altitude != 0);
