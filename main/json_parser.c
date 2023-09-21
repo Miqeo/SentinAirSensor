@@ -2,9 +2,9 @@
 
 #define TAG "json_stack"
 
-double round_number(double val)
+double round_number(double val, int place)
 {
-    return roundf(val * 100) / 100;
+    return (double)((int)(val * pow(10, place)) / pow(10.0, place));
 }
 
 
@@ -61,13 +61,13 @@ char *create_json(struct Measurement_structure measurement_struct)
         goto end;
     }
 
-    longtitude = cJSON_CreateNumber(measurement_struct.longtitude);
+    longtitude = cJSON_CreateNumber(round_number(measurement_struct.longtitude, 3));
     if (longtitude == NULL) {
         goto end;
     }
     cJSON_AddItemToArray(coordinates, longtitude);
 
-    latitude = cJSON_CreateNumber(measurement_struct.latitude);
+    latitude = cJSON_CreateNumber(round_number(measurement_struct.latitude, 3));
     if (latitude == NULL) {
         goto end;
     }
@@ -90,27 +90,27 @@ char *create_json(struct Measurement_structure measurement_struct)
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(properties, "humidity", measurement_struct.humidity) == NULL)
+    if (cJSON_AddNumberToObject(properties, "humidity", round_number(measurement_struct.humidity, 2)) == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(properties, "temperature", measurement_struct.temperature) == NULL)
+    if (cJSON_AddNumberToObject(properties, "temperature", round_number(measurement_struct.temperature, 2)) == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(properties, "pressure", measurement_struct.pressure) == NULL)
+    if (cJSON_AddNumberToObject(properties, "pressure", round_number(measurement_struct.pressure, 2)) == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(properties, "dust", measurement_struct.dust) == NULL)
+    if (cJSON_AddNumberToObject(properties, "dust_voltage", round_number(measurement_struct.dust, 4)) == NULL)
     {
         goto end;
     }
 
-    if (cJSON_AddNumberToObject(properties, "altitude", measurement_struct.altitude) == NULL)
+    if (cJSON_AddNumberToObject(properties, "altitude", round_number(measurement_struct.altitude, 1)) == NULL)
     {
         goto end;
     }
@@ -137,103 +137,3 @@ end:
     cJSON_Delete(measurement);
     return string;
 }
-
-// void parse_json(const char* value, struct Measurement_structure* measurement_to_parse)
-// {
-//     // const cJSON *measurements = NULL;
-//     const cJSON *measurement = NULL;
-
-//     cJSON *monitor_json = cJSON_Parse(value);
-
-//     if (monitor_json == NULL)
-//     {
-//         const char *error_ptr = cJSON_GetErrorPtr();
-//         if (error_ptr != NULL)
-//         {
-//             ESP_LOGW(TAG, "Empty json before: %s, for value: %s", error_ptr, value);
-//         }
-//         return;
-//         // return NULL;
-//     }
-    
-//     // measurements = cJSON_GetObjectItemCaseSensitive(monitor_json, "measurements");
-//     measurement = cJSON_GetObjectItemCaseSensitive(monitor_json, "measurements");
-
-
-//     cJSON *date = cJSON_GetObjectItemCaseSensitive(measurement, "date");
-//     cJSON *humidity = cJSON_GetObjectItemCaseSensitive(measurement, "humidity");
-//     cJSON *temperature = cJSON_GetObjectItemCaseSensitive(measurement, "temperature");
-//     cJSON *pressure = cJSON_GetObjectItemCaseSensitive(measurement, "pressure");
-//     cJSON *dust = cJSON_GetObjectItemCaseSensitive(measurement, "dust");
-//     cJSON *latitude = cJSON_GetObjectItemCaseSensitive(measurement, "lat");
-//     cJSON *longtitude = cJSON_GetObjectItemCaseSensitive(measurement, "lon");
-//     cJSON *altitude = cJSON_GetObjectItemCaseSensitive(measurement, "alt");
-
-//     if (!cJSON_IsNumber(humidity) || !cJSON_IsNumber(temperature) || !cJSON_IsNumber(pressure) || !cJSON_IsNumber(latitude) || !cJSON_IsNumber(longtitude) || !cJSON_IsNumber(altitude) || !cJSON_IsString(date))
-//     {
-//         ESP_LOGW(TAG, "parse_json json object with wrong data type");
-//         return;
-//     }
-//     struct Measurement_structure measurement_struct;
-
-//     measurement_struct.date = date->valuestring;
-//     measurement_struct.humidity = humidity->valuedouble;
-//     measurement_struct.temperature = temperature->valuedouble;
-//     measurement_struct.pressure = pressure->valuedouble;
-//     measurement_struct.dust = dust->valuedouble;
-//     measurement_struct.latitude = latitude->valuedouble;
-//     measurement_struct.longtitude = longtitude->valuedouble;
-//     measurement_struct.altitude = altitude->valuedouble;
-
-//     measurement_to_parse = measurement_struct;
-
-//     ESP_LOGI(TAG, "date: %s, humidity: %f, temperature: %f, pressure: %f, dust: %f, lat: %f, lon: %f, alt: %f",
-//             measurement_struct.date, measurement_struct.humidity, measurement_struct.temperature, measurement_struct.pressure, measurement_struct.dust, measurement_struct.latitude, measurement_struct.longtitude, measurement_struct.altitude);
-//     // int actual_arr_size = cJSON_GetArraySize(measurements);
-
-//     // ESP_LOGI(TAG, "parse_json json array size: %d, max size: %d", actual_arr_size, arr_size);
-//     // struct Measurement_structure measurements_list[arr_size];
-
-//     // int iterate = 0;
-
-//     // cJSON_ArrayForEach(measurement, measurements)
-//     // {   
-//     //     // if (iterate >= arr_size) { break; }
-        
-//     //     cJSON *date = cJSON_GetObjectItemCaseSensitive(measurement, "date");
-//     //     cJSON *humidity = cJSON_GetObjectItemCaseSensitive(measurement, "humidity");
-//     //     cJSON *temperature = cJSON_GetObjectItemCaseSensitive(measurement, "temperature");
-//     //     cJSON *pressure = cJSON_GetObjectItemCaseSensitive(measurement, "pressure");
-//     //     cJSON *dust = cJSON_GetObjectItemCaseSensitive(measurement, "dust");
-//     //     cJSON *latitude = cJSON_GetObjectItemCaseSensitive(measurement, "lat");
-//     //     cJSON *longtitude = cJSON_GetObjectItemCaseSensitive(measurement, "lon");
-//     //     cJSON *altitude = cJSON_GetObjectItemCaseSensitive(measurement, "alt");
-
-//     //     if (!cJSON_IsNumber(humidity) || !cJSON_IsNumber(temperature) || !cJSON_IsNumber(pressure) || !cJSON_IsNumber(latitude) || !cJSON_IsNumber(longtitude) || !cJSON_IsNumber(altitude) || !cJSON_IsString(date))
-//     //     {
-//     //         ESP_LOGW(TAG, "parse_json json object with wrong data type");
-//     //         continue;
-//     //     }
-//     //     struct Measurement_structure measurement;
-
-//     //     measurement.date = date->valuestring;
-//     //     measurement.humidity = humidity->valuedouble;
-//     //     measurement.temperature = temperature->valuedouble;
-//     //     measurement.pressure = pressure->valuedouble;
-//     //     measurement.dust = dust->valuedouble;
-//     //     measurement.latitude = latitude->valuedouble;
-//     //     measurement.longtitude = longtitude->valuedouble;
-//     //     measurement.altitude = altitude->valuedouble;
-
-//     //     measurements_list[iterate] = measurement;
-
-//     //     ESP_LOGI(TAG, "parse_json adding measurement %d %s", iterate, measurements_list[iterate].date);
-//     //     iterate += 1;
-//     // }
-
-//     // for(int y = 0; y < sizeof(measurements_list) / sizeof(struct Measurement_structure); y++ )
-//     // {
-//     //     ESP_LOGI(TAG, "date: %s, humidity: %f, temperature: %f, pressure: %f, dust: %f, lat: %f, lon: %f, alt: %f",
-//     //         measurements_list[y].date, measurements_list[y].humidity, measurements_list[y].temperature, measurements_list[y].pressure, measurements_list[y].dust, measurements_list[y].latitude, measurements_list[y].longtitude, measurements_list[y].altitude);
-//     // }
-// }

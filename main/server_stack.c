@@ -98,7 +98,7 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
     }
 
     /* Send HTML file header */
-    httpd_resp_sendstr_chunk(req, "<!DOCTYPE html><html><body>");
+    httpd_resp_sendstr_chunk(req, "<!DOCTYPE html><html><head> <style> body{ font-family: Verdana, sans-serif; font-size: 12px } </style></head><body>");
 
     /* Get handle to embedded file upload script */
     extern const unsigned char upload_script_start[] asm("_binary_upload_script_html_start");
@@ -111,13 +111,17 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
     /* Send file-list table definition and column labels */
     httpd_resp_sendstr_chunk(req,
         "<table class=\"fixed\" border=\"1\">"
-        "<col width=\"800px\" /><col width=\"300px\" /><col width=\"300px\" /><col width=\"100px\" />"
-        "<thead><tr><th>Name</th><th>Type</th><th>Size (Bytes)</th><th>Delete</th></tr></thead>"
+        "<col width=\"400px\" /><col width=\"300px\" /><col width=\"100px\" />"
+        "<thead><tr><th>Name</th><th>Size (Bytes)</th><th>Delete</th></tr></thead>"
         "<tbody>");
 
     /* Iterate over all files / folders and fetch their names and sizes */
     while ((entry = readdir(dir)) != NULL) {
         entrytype = (entry->d_type == DT_DIR ? "directory" : "file");
+
+        if (entry->d_type == DT_DIR) {
+            continue;
+        }
 
         strlcpy(entrypath + dirpath_len, entry->d_name, sizeof(entrypath) - dirpath_len);
         if (stat(entrypath, &entry_stat) == -1) {
@@ -139,8 +143,6 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
         httpd_resp_sendstr_chunk(req, "\">");
         httpd_resp_sendstr_chunk(req, entry->d_name);
         httpd_resp_sendstr_chunk(req, "</a></td><td>");
-        httpd_resp_sendstr_chunk(req, entrytype);
-        httpd_resp_sendstr_chunk(req, "</td><td>");
         httpd_resp_sendstr_chunk(req, entrysize);
         httpd_resp_sendstr_chunk(req, "</td><td>");
         httpd_resp_sendstr_chunk(req, "<form method=\"post\" action=\"/delete");
@@ -288,48 +290,3 @@ esp_err_t delete_post_handler(httpd_req_t *req)
     httpd_resp_sendstr(req, "File deleted successfully");
     return ESP_OK;
 }
-
-// /* Function to start the file server */
-// esp_err_t example_start_file_server(const char *base_path)
-// {
-//     static struct file_server_data *server_data = NULL;
-
-//     if (server_data) {
-//         ESP_LOGE(TAG, "File server already started");
-//         return ESP_ERR_INVALID_STATE;
-//     }
-
-//     /* Allocate memory for server data */
-//     server_data = calloc(1, sizeof(struct file_server_data));
-//     if (!server_data) {
-//         ESP_LOGE(TAG, "Failed to allocate memory for server data");
-//         return ESP_ERR_NO_MEM;
-//     }
-//     strlcpy(server_data->base_path, base_path,
-//             sizeof(server_data->base_path));
-
-//     httpd_handle_t server = NULL;
-//     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
-//     /* Use the URI wildcard matching function in order to
-//      * allow the same handler to respond to multiple different
-//      * target URIs which match the wildcard scheme */
-//     config.uri_match_fn = httpd_uri_match_wildcard;
-
-//     ESP_LOGI(TAG, "Starting HTTP Server on port: '%d'", config.server_port);
-//     if (httpd_start(&server, &config) != ESP_OK) {
-//         ESP_LOGE(TAG, "Failed to start file server!");
-//         return ESP_FAIL;
-//     }
-
-//     /* URI handler for getting uploaded files */
-//     httpd_uri_t file_download = {
-//         .uri       = "/*",  // Match all URIs of type /path/to/file
-//         .method    = HTTP_GET,
-//         .handler   = download_get_handler,
-//         .user_ctx  = server_data    // Pass server data as context
-//     };
-//     httpd_register_uri_handler(server, &file_download);
-
-//     return ESP_OK;
-// }

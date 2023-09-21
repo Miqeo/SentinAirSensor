@@ -99,12 +99,6 @@ static esp_err_t s_example_read_file(const char *path)
         ESP_LOGE(TAG, "Failed to open file for reading");
         return ESP_FAIL;
     }
-    // char data[EXAMPLE_MAX_CHAR_SIZE];
-
-
-    // char buf[260];
-    // fgets(buf, sizeof(buf), f);
-
     size_t n = 0;
 
     while ( fgets( data + n,20,stdin) != NULL)
@@ -114,12 +108,6 @@ static esp_err_t s_example_read_file(const char *path)
     
     
     fclose(f);
-
-    // // strip newline
-    // char *pos = strchr(data, '\n');
-    // if (pos) {
-    //     *pos = '\0';
-    // }
     ESP_LOGI(TAG, "Read from file: '%s'", data);
 
     return ESP_OK;
@@ -145,11 +133,7 @@ static esp_err_t s_example_write_file(const char *path, char *data)
 void write_file(char* value, char* title) 
 {
     esp_err_t ret;
-    // char data[EXAMPLE_MAX_CHAR_SIZE];
-    
-    // const char *file_json = MOUNT_POINT;
 
-    
     snprintf(file_json, sizeof(file_json), "%s/%s.json", MOUNT_POINT, title);
 
     memset(data, 0, EXAMPLE_MAX_CHAR_SIZE);
@@ -181,8 +165,6 @@ void save_json_measurement(struct Measurement_structure measurement, char* title
 
         array_to_save = create_json(measurement);
 
-        // parse_json(array_to_save, measurement);
-
         ESP_LOGI(TAG, "add to json: %s", array_to_save);
         
         write_file(array_to_save, title);
@@ -199,13 +181,6 @@ void save_json_measurement(struct Measurement_structure measurement, char* title
         
         fclose(f);
 
-        // fgets(data, sizeof(data), f);
-        // fclose(f);
-        
-        // char *pos = strchr(data, '\n');
-        // if (pos) {
-        //     *pos = '\0';
-        // }
         ESP_LOGI(TAG, "Read from file: '%s'", data);
 
         array_to_save = create_json(measurement);

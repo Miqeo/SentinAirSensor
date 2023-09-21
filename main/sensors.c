@@ -20,8 +20,9 @@ double pm_sense()
     bool s_led_state = false;
     int voltage;
     int delay = 280;
-    int num_retry = 10;
-    int pm_average = 0;
+    int num_retry = 3;
+    double pm_average = 0;
+    double voltage_average = 0;
 
     for (int i = num_retry; i > 0; i--)
     {
@@ -30,28 +31,34 @@ double pm_sense()
 
         if (!s_led_state) {
             voltage = esp_adc_cal_raw_to_voltage(adc1_get_raw(ADC1_CHANNEL_7), &adc1_chars);
-
-            pm_average += 0.17 * voltage - 0.01;
-            ESP_LOGI(TAG, "Led state: %i ADC1_CHANNEL_7: %d mV", s_led_state, voltage);
         }
         
         vTaskDelay(delay / portTICK_PERIOD_MS);
+
+        if (!s_led_state) {
+            voltage_average += voltage;
+            // pm_average += 0.17 * voltage - 0.01;
+            ESP_LOGI(TAG, "Led state: %i ADC1_CHANNEL_7: %d mV", s_led_state, voltage);
+        }
     }
 
-    return pm_average / num_retry;
+
+    ESP_LOGI(TAG, "voltage average: %f mV", voltage_average / num_retry);
+
+    return (voltage_average / num_retry) / 1000;
 }
 
 int pm_init(void)
 {
     gpio_set_direction(GPIO_NUM_25, GPIO_MODE_OUTPUT);
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_DEFAULT, 0, &adc1_chars);
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_2_5, ADC_WIDTH_BIT_DEFAULT, 0, &adc1_chars);
 
 
     if (adc1_config_width(ADC_WIDTH_BIT_DEFAULT) != 0) {
         return 1;
     }
 
-    if (adc1_config_channel_atten(ADC1_CHANNEL_7, ADC_ATTEN_DB_11) != 0) {
+    if (adc1_config_channel_atten(ADC1_CHANNEL_7, ADC_ATTEN_DB_2_5) != 0) {
         return 1;
     }
 
@@ -125,6 +132,8 @@ struct Bmx280_data bm_sense(void)
         float temp = 0, pres = 0, hum = 0;
         ESP_ERROR_CHECK(bmx280_readoutFloat(bmx280, &temp, &pres, &hum));
 
+        pres = pres / 100;
+
         bmx_data.humidity += hum;
         bmx_data.pressure += pres;
         bmx_data.temperature += temp;
@@ -134,7 +143,7 @@ struct Bmx280_data bm_sense(void)
 
     bmx_data.humidity = bmx_data.humidity / num_retry;
     bmx_data.pressure = bmx_data.pressure / num_retry;
-    bmx_data.temperature = bmx_data.pressure / num_retry;
+    bmx_data.temperature = bmx_data.temperature / num_retry;
 
     return bmx_data;
 }
@@ -148,7 +157,6 @@ double bm()
 
 bool gps_correct_update(gps_t *gps) 
 {
-    return true;
     return gps->fix != GPS_FIX_INVALID
         ||
         (gps->latitude != 0 && gps->longitude != 0 && gps->altitude != 0);
@@ -202,6 +210,7 @@ void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int
             // bm_deinit();
 
             if (pm_init() != 0) { measurement_failure(); break; }
+            vTaskDelay(1000/portTICK_PERIOD_MS);
             measurement.dust = pm_sense(); 
 
             save_json_measurement(measurement, date_title);
